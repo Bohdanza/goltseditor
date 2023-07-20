@@ -40,7 +40,7 @@ namespace goltseditor
 
         protected override void Initialize()
         {
-            world = new World(Content, "saves\\1");
+            world = new World(/*Content,*/ "saves\\1");
             base.Initialize();
         }
 
@@ -115,7 +115,7 @@ namespace goltseditor
 
             jss.TypeNameHandling = TypeNameHandling.All;
 
-            var serialized = JsonConvert.SerializeObject(source, jss);
+            string serialized = JsonConvert.SerializeObject(source, jss);
             return JsonConvert.DeserializeObject<T>(serialized, jss);
         }
     }

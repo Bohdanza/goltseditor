@@ -31,7 +31,7 @@ namespace goltseditor
 
         private bool HitboxesShown = true;
 
-        public int SelectedAvaliableObject { get; protected set; } = 0;
+        public int SelectedAvaliableObject { get; protected set; } = 1;
         public int CurrentInterfaceStage { get; protected set; }
 
         private MouseState PreviousMouseState;
@@ -59,6 +59,14 @@ namespace goltseditor
             AvaliableObjects = new List<WorldObject>();
 
             AvaliableObjects.Add(new Hero(contentManager, 800, 300, 0, 0));
+            AvaliableObjects.Add(new Obstacle(contentManager, 0, 0, "goltsov_",
+                new List<Tuple<double, double>>
+                {
+                    new Tuple<double, double>(-200, 0),
+                    new Tuple<double, double>(200, 0),
+                    new Tuple<double, double>(200, -20),
+                    new Tuple<double, double>(-200, -20),
+                }));
         }
 
         /// <summary>
@@ -74,6 +82,8 @@ namespace goltseditor
             Path = path;
 
             Load();
+
+            AvaliableObjects = new List<WorldObject>();
         }
 
         public void Update(ContentManager contentManager)
@@ -87,12 +97,13 @@ namespace goltseditor
             }
 
             MouseState ms = Mouse.GetState();
+            KeyboardState ks = Keyboard.GetState();
 
             if (ms.LeftButton == ButtonState.Released && PreviousMouseState.LeftButton == ButtonState.Pressed)
             {
                 if (CurrentInterfaceStage == 0)
                 {
-                    if (ms.X <= AvObjectsXBound)
+                    if (ms.X <= AvObjectsXBound&&AvaliableObjects.Count>SelectedAvaliableObject)
                     {
                         WorldObject wo = AvaliableObjects[SelectedAvaliableObject];
 
@@ -105,6 +116,14 @@ namespace goltseditor
                 }
             }
 
+            if (ks.IsKeyDown(Keys.Down))
+                SelectedAvaliableObject++;
+            if (ks.IsKeyDown(Keys.Up))
+                SelectedAvaliableObject--;
+
+            SelectedAvaliableObject = Math.Max(SelectedAvaliableObject, 0);
+            SelectedAvaliableObject = Math.Min(SelectedAvaliableObject, AvaliableObjects.Count);
+
             PreviousMouseState = ms;
         }
 
@@ -112,15 +131,18 @@ namespace goltseditor
         {
             if (CurrentInterfaceStage == 0)
             {
-                int yq = 10 + AvaliableObjectsOffsetY + 
-                    AvaliableObjects[SelectedAvaliableObject].Texture.GetCurrentFrame().Height*3;
-
-                foreach(var cobj in AvaliableObjects)
+                if (AvaliableObjects.Count > 0)
                 {
-                    cobj.Draw(AvObjectsXBound + 960 - AvObjectsXBound / 2, yq, spriteBatch,
-                        0.1f, 3f, Color.White, SpriteEffects.None);
+                    int yq = 10 + AvaliableObjectsOffsetY +
+                        (int)(AvaliableObjects[SelectedAvaliableObject].Texture.GetCurrentFrame().Height * Game1.StandardScale);
 
-                    yq += 5 + cobj.Texture.GetCurrentFrame().Height*3;
+                    foreach (var cobj in AvaliableObjects)
+                    {
+                        cobj.Draw(AvObjectsXBound + 960 - AvObjectsXBound / 2, yq, spriteBatch,
+                            0.1f, Game1.StandardScale, Color.White, SpriteEffects.None);
+
+                        yq += 5 + (int)(cobj.Texture.GetCurrentFrame().Height * Game1.StandardScale);
+                    }
                 }
 
                 foreach (var currentObject in objects.objects)
@@ -160,13 +182,15 @@ namespace goltseditor
         {
             var jss = new JsonSerializerSettings();
             jss.TypeNameHandling = TypeNameHandling.Objects;
+            string st = JsonConvert.SerializeObject(objects, jss);
 
-            using (StreamWriter sw=new StreamWriter(Path+RoomIndex.ToString()))
-            {
-                string st = JsonConvert.SerializeObject(objects, jss);
-
+            using (StreamWriter sw=new StreamWriter(Path+RoomIndex.ToString()+"ed"))
                 sw.Write(st);
-            }
+
+            st=st.Replace("goltseditor", "golts");
+
+            using (StreamWriter sw = new StreamWriter(Path + RoomIndex.ToString()))
+                sw.Write(st);
         }
 
         private void Load()
@@ -182,7 +206,7 @@ namespace goltseditor
             var jss = new JsonSerializerSettings();
             jss.TypeNameHandling = TypeNameHandling.Objects;
 
-            using (StreamReader sr = new StreamReader(Path + index.ToString()))
+            using (StreamReader sr = new StreamReader(Path + index.ToString()+"ed"))
             {
                 objects = (ObjectList)JsonConvert.DeserializeObject(sr.ReadToEnd(), jss);
             }
