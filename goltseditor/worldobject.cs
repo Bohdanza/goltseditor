@@ -28,9 +28,9 @@ namespace goltseditor
         [JsonProperty]
         public double MovementY { get; protected set; }
         [JsonProperty]
-        public double X { get; protected set; }
+        public double X { get;set; }
         [JsonProperty]
-        public double Y { get; protected set; }
+        public double Y { get; set; }
 
         [JsonProperty]
         public DynamicTexture Texture { get; protected set; }

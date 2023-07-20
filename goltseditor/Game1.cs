@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using Newtonsoft.Json;
 using System;
 
 namespace goltseditor
@@ -106,6 +107,16 @@ namespace goltseditor
         public static Tuple<double, double> DirectionToTuple(float direction)
         {
             return new Tuple<double, double>(Math.Cos(direction), Math.Sin(direction));
+        }
+
+        public static T Clone<T>(T source)
+        {
+            var jss = new JsonSerializerSettings();
+
+            jss.TypeNameHandling = TypeNameHandling.All;
+
+            var serialized = JsonConvert.SerializeObject(source, jss);
+            return JsonConvert.DeserializeObject<T>(serialized, jss);
         }
     }
 }

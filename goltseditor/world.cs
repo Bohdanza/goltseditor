@@ -24,13 +24,19 @@ namespace goltseditor
         public int RoomIndex { get; private set; } = 0;
 
         public ObjectList objects { get; private set; }
+        public List<WorldObject> AvaliableObjects { get; protected set; }
 
         //why not
         public WorldObject Camera { get; private set; }
 
         private bool HitboxesShown = true;
 
-        private int SelectedObject = 0;
+        public int SelectedAvaliableObject { get; protected set; } = 0;
+        public int CurrentInterfaceStage { get; protected set; }
+
+        private MouseState PreviousMouseState;
+
+        private int AvaliableObjectsOffsetY = 0, AvObjectsXBound=1625;
 
         //Later these init methods shall be made one for the good code style rejoice.
         //It should automatically check for saves and load or create new depending on found ones
@@ -42,14 +48,17 @@ namespace goltseditor
         /// <param name="path"></param>
         public World(ContentManager contentManager, string path)
         {
+            PreviousMouseState = Mouse.GetState();
+
             if (path[path.Length - 1] != '\\')
                 path += "\\";
 
             Path = path;
 
             objects = new ObjectList(MaxLoadedSize);
+            AvaliableObjects = new List<WorldObject>();
 
-            objects.AddObject(new Hero(contentManager, 800, 300, 0, 0));
+            AvaliableObjects.Add(new Hero(contentManager, 800, 300, 0, 0));
         }
 
         /// <summary>
@@ -69,26 +78,71 @@ namespace goltseditor
 
         public void Update(ContentManager contentManager)
         {
+            for (int i = 0; i < AvaliableObjects.Count; i++)
+                AvaliableObjects[i].Update(contentManager, this);
+
             for(int i=0; i<objects.objects.Count; i++)
             {
                 objects.objects[i].Update(contentManager, this);
             }
+
+            MouseState ms = Mouse.GetState();
+
+            if (ms.LeftButton == ButtonState.Released && PreviousMouseState.LeftButton == ButtonState.Pressed)
+            {
+                if (CurrentInterfaceStage == 0)
+                {
+                    if (ms.X <= AvObjectsXBound)
+                    {
+                        WorldObject wo = AvaliableObjects[SelectedAvaliableObject];
+
+                        WorldObject obj = Game1.Clone(AvaliableObjects[SelectedAvaliableObject]);
+                        obj.X = ms.X;
+                        obj.Y = ms.Y;
+
+                        objects.AddObject(obj);
+                    }
+                }
+            }
+
+            PreviousMouseState = ms;
         }
 
         public void Draw(SpriteBatch spriteBatch)
         {
-            foreach(var currentObject in objects.objects)
+            if (CurrentInterfaceStage == 0)
             {
-                currentObject.Draw((int)currentObject.X, (int)currentObject.Y, spriteBatch, 0f, Game1.StandardScale, Color.White, SpriteEffects.None);
+                int yq = 10 + AvaliableObjectsOffsetY + 
+                    AvaliableObjects[SelectedAvaliableObject].Texture.GetCurrentFrame().Height*3;
 
-                if (HitboxesShown && currentObject is PhysicalObject)
-                    ((PhysicalObject)currentObject).Hitbox.Draw((int)currentObject.X, (int)currentObject.Y, 
-                        spriteBatch, 0f, Color.White);
+                foreach(var cobj in AvaliableObjects)
+                {
+                    cobj.Draw(AvObjectsXBound + 960 - AvObjectsXBound / 2, yq, spriteBatch,
+                        0.1f, 3f, Color.White, SpriteEffects.None);
+
+                    yq += 5 + cobj.Texture.GetCurrentFrame().Height*3;
+                }
+
+                foreach (var currentObject in objects.objects)
+                {
+                    currentObject.Draw((int)currentObject.X, (int)currentObject.Y, spriteBatch, 0.5f, Game1.StandardScale, Color.White, SpriteEffects.None);
+
+                    if (HitboxesShown && currentObject is PhysicalObject)
+                        ((PhysicalObject)currentObject).Hitbox.Draw((int)currentObject.X, (int)currentObject.Y,
+                            spriteBatch, 0f, Color.White);
+                }
+
+                var ms = PreviousMouseState;
+
+                if (SelectedAvaliableObject < AvaliableObjects.Count)
+                {
+                    AvaliableObjects[SelectedAvaliableObject].Draw(ms.X, ms.Y, spriteBatch, 0.999f, Game1.StandardScale, Color.Red,
+                        SpriteEffects.None);
+
+                    if (AvaliableObjects[SelectedAvaliableObject] is PhysicalObject)
+                        ((PhysicalObject)AvaliableObjects[SelectedAvaliableObject]).Hitbox.Draw(ms.X, ms.Y, spriteBatch, 1f, Color.White);
+                }
             }
-
-            if (SelectedObject < objects.objects.Count)
-                objects.objects[SelectedObject].Draw((int)objects.objects[SelectedObject].X, (int)objects.objects[SelectedObject].Y,
-                    spriteBatch, 1f, Game1.StandardScale, Color.Red, SpriteEffects.None);
         }
 
         public void Save()
