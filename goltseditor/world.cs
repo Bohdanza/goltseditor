@@ -109,6 +109,7 @@ namespace goltseditor
 
                         WorldObject obj = Game1.Clone(AvaliableObjects[SelectedAvaliableObject]);
                         obj.X = ms.X;
+
                         obj.Y = ms.Y;
 
                         objects.AddObject(obj);
@@ -122,7 +123,7 @@ namespace goltseditor
                 SelectedAvaliableObject--;
 
             SelectedAvaliableObject = Math.Max(SelectedAvaliableObject, 0);
-            SelectedAvaliableObject = Math.Min(SelectedAvaliableObject, AvaliableObjects.Count);
+            SelectedAvaliableObject = Math.Min(SelectedAvaliableObject, AvaliableObjects.Count-1);
 
             PreviousMouseState = ms;
         }
@@ -131,6 +132,12 @@ namespace goltseditor
         {
             if (CurrentInterfaceStage == 0)
             {
+                spriteBatch.Draw(Game1.OnePixel, new Vector2(0, 0), null, Game1.BackgroundColor, 0f, new Vector2(0, 0),
+                    new Vector2(AvObjectsXBound, 1080), SpriteEffects.None, 0.49f);
+
+                spriteBatch.Draw(Game1.OnePixel, new Vector2(AvObjectsXBound, 0), null, Game1.BorderColor, 0f, new Vector2(0, 0),
+                    new Vector2(2, 1080), SpriteEffects.None, 1f);
+
                 if (AvaliableObjects.Count > 0)
                 {
                     int yq = 10 + AvaliableObjectsOffsetY +

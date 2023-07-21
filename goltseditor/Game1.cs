@@ -11,6 +11,8 @@ namespace goltseditor
         public static Texture2D NoTexture;
         public static Texture2D OnePixel;
         public static float StandardScale = 4f;
+        public static Color BackgroundColor { get; protected set; } = new Color(175, 175, 175);
+        public static Color BorderColor { get; protected set; } = Color.Black;
 
         private GraphicsDeviceManager _graphics;
         private SpriteBatch _spriteBatch;
@@ -40,7 +42,7 @@ namespace goltseditor
 
         protected override void Initialize()
         {
-            world = new World(/*Content,*/ "saves\\1");
+            world = new World(Content, "saves\\1");
             base.Initialize();
         }
 
@@ -69,9 +71,9 @@ namespace goltseditor
 
         protected override void Draw(GameTime gameTime)
         {
-            GraphicsDevice.Clear(new Color(128, 128, 128));
+            GraphicsDevice.Clear(BackgroundColor);
 
-            _spriteBatch.Begin(SpriteSortMode.Deferred, null, SamplerState.PointClamp);
+            _spriteBatch.Begin(SpriteSortMode.FrontToBack, null, SamplerState.PointClamp);
             world.Draw(_spriteBatch);
             _spriteBatch.End();
 
