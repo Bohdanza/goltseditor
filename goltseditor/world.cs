@@ -14,6 +14,7 @@ namespace goltseditor
 {
     public class World
     {
+        public button btn { get; private set; } = null;
         //1920*3
         public const int MaxLoadedSize = 5760;
 
@@ -82,16 +83,18 @@ namespace goltseditor
             Path = path;
 
             Load();
-
-            AvaliableObjects = new List<WorldObject>();
         }
 
         public void Update(ContentManager contentManager)
         {
+            if (btn == null)
+                btn = new button(0, AvObjectsXBound, 1000, 280, 108,
+                    contentManager.Load<Texture2D>("newreleased"), contentManager.Load<Texture2D>("newpressed"));
+
             for (int i = 0; i < AvaliableObjects.Count; i++)
                 AvaliableObjects[i].Update(contentManager, this);
 
-            for(int i=0; i<objects.objects.Count; i++)
+            for (int i = 0; i < objects.objects.Count; i++)
             {
                 objects.objects[i].Update(contentManager, this);
             }
@@ -99,11 +102,11 @@ namespace goltseditor
             MouseState ms = Mouse.GetState();
             KeyboardState ks = Keyboard.GetState();
 
-            if (ms.LeftButton == ButtonState.Released && PreviousMouseState.LeftButton == ButtonState.Pressed)
+            if (CurrentInterfaceStage == 0)
             {
-                if (CurrentInterfaceStage == 0)
+                if (ms.LeftButton == ButtonState.Released && PreviousMouseState.LeftButton == ButtonState.Pressed)
                 {
-                    if (ms.X <= AvObjectsXBound&&AvaliableObjects.Count>SelectedAvaliableObject)
+                    if (ms.X <= AvObjectsXBound && AvaliableObjects.Count > SelectedAvaliableObject)
                     {
                         WorldObject wo = AvaliableObjects[SelectedAvaliableObject];
 
@@ -115,15 +118,20 @@ namespace goltseditor
                         objects.AddObject(obj);
                     }
                 }
+
+                if (ks.IsKeyDown(Keys.Down))
+                    SelectedAvaliableObject++;
+                if (ks.IsKeyDown(Keys.Up))
+                    SelectedAvaliableObject--;
+
+                SelectedAvaliableObject = Math.Max(SelectedAvaliableObject, 0);
+                SelectedAvaliableObject = Math.Min(SelectedAvaliableObject, AvaliableObjects.Count - 1);
+
+                btn.update();
+
+                if (btn.pressed)
+                    CurrentInterfaceStage = 1;
             }
-
-            if (ks.IsKeyDown(Keys.Down))
-                SelectedAvaliableObject++;
-            if (ks.IsKeyDown(Keys.Up))
-                SelectedAvaliableObject--;
-
-            SelectedAvaliableObject = Math.Max(SelectedAvaliableObject, 0);
-            SelectedAvaliableObject = Math.Min(SelectedAvaliableObject, AvaliableObjects.Count-1);
 
             PreviousMouseState = ms;
         }
@@ -132,6 +140,8 @@ namespace goltseditor
         {
             if (CurrentInterfaceStage == 0)
             {
+                btn.draw(spriteBatch);
+
                 spriteBatch.Draw(Game1.OnePixel, new Vector2(0, 0), null, Game1.BackgroundColor, 0f, new Vector2(0, 0),
                     new Vector2(AvObjectsXBound, 1080), SpriteEffects.None, 0.49f);
 
@@ -143,7 +153,7 @@ namespace goltseditor
                     int yq = 10 + AvaliableObjectsOffsetY +
                         (int)(AvaliableObjects[SelectedAvaliableObject].Texture.GetCurrentFrame().Height * Game1.StandardScale);
 
-                    foreach (var cobj in AvaliableObjects)
+                    foreach (var cobj in AvaliableObjects) 
                     {
                         cobj.Draw(AvObjectsXBound + 960 - AvObjectsXBound / 2, yq, spriteBatch,
                             0.1f, Game1.StandardScale, Color.White, SpriteEffects.None);
@@ -163,7 +173,7 @@ namespace goltseditor
 
                 var ms = PreviousMouseState;
 
-                if (SelectedAvaliableObject < AvaliableObjects.Count)
+                if (SelectedAvaliableObject < AvaliableObjects.Count&&ms.X<AvObjectsXBound)
                 {
                     AvaliableObjects[SelectedAvaliableObject].Draw(ms.X, ms.Y, spriteBatch, 0.999f, Game1.StandardScale, Color.Red,
                         SpriteEffects.None);
@@ -181,6 +191,14 @@ namespace goltseditor
 
             using (StreamWriter sw = new StreamWriter(Path + "currentroom"))
                 sw.WriteLine(RoomIndex);
+
+
+            var jss = new JsonSerializerSettings();
+            jss.TypeNameHandling = TypeNameHandling.All;
+            string st = JsonConvert.SerializeObject(AvaliableObjects, jss);
+
+            using (StreamWriter sw = new StreamWriter(Path + "avaliable"))
+                sw.WriteLine(st);
 
             SaveRoom();
         }
@@ -204,6 +222,16 @@ namespace goltseditor
         {
             using (StreamReader sr = new StreamReader(Path + "currentroom"))
                 RoomIndex = int.Parse(sr.ReadLine());
+
+            var jss = new JsonSerializerSettings();
+            jss.TypeNameHandling = TypeNameHandling.All;
+            string str = "";
+
+            using (StreamReader sw = new StreamReader(Path + "avaliable"))
+                str = sw.ReadToEnd();
+
+            var q = JsonConvert.DeserializeObject(str, jss);
+            AvaliableObjects = (List<WorldObject>)q;
 
             LoadRoom(RoomIndex);
         }

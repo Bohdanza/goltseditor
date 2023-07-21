@@ -42,7 +42,8 @@ namespace goltseditor
 
         protected override void Initialize()
         {
-            world = new World(Content, "saves\\1");
+            //world = new World(Content, "saves\\1");
+            world = new World("saves\\1");
             base.Initialize();
         }
 
@@ -65,6 +66,20 @@ namespace goltseditor
             // TODO: Add your update logic here
 
             world.Update(Content);
+
+            var ks = Keyboard.GetState();
+
+           /* if(ks.IsKeyDown(Keys.LeftAlt)&&ks.IsKeyDown(Keys.Enter)) 
+            {
+                _graphics.IsFullScreen = true;
+                _graphics.ApplyChanges();
+            }
+
+            if (ks.IsKeyDown(Keys.RightAlt) && ks.IsKeyDown(Keys.Enter))
+            {
+                _graphics.IsFullScreen = false;
+                _graphics.ApplyChanges();
+            }*/
 
             base.Update(gameTime);
         }

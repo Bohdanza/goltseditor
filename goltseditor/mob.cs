@@ -17,7 +17,10 @@ namespace goltseditor
         public int HP { get; protected set; }
         public int MaxHP { get; protected set; }
 
+        [JsonProperty]
         public string Action { get; protected set; }
+
+        [JsonIgnore]
         protected string previousAction = "";
  
         public int Direction { get; protected set; }
