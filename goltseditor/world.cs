@@ -9,7 +9,6 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using Newtonsoft.Json;
-using System.Drawing;
 
 using Color = Microsoft.Xna.Framework.Color;
 
@@ -17,13 +16,6 @@ namespace goltseditor
 {
     public class World
     {
-        private int TimeSinceTextureChange = 11, currentTextureNumber=0;
-
-        public List<string> textureNames = new List<string>
-        {
-            "goltsov_",
-        };
-
         public Button btn { get; private set; } = null;
         private  List<Button> ObjectButtons { get; set; }
         public WorldObject CurrentlyCreatedObject { get; protected set; } = null;
@@ -50,6 +42,7 @@ namespace goltseditor
         private MouseState PreviousMouseState;
 
         private int AvaliableObjectsOffsetY = 0, AvObjectsXBound=1625;
+        private Textbox CreatedTextureName;
 
         //Later these init methods shall be made one for the good code style rejoice.
         //It should automatically check for saves and load or create new depending on found ones
@@ -82,6 +75,7 @@ namespace goltseditor
                 }));
 
             ObjectButtonsInit(contentManager);
+            CreatedTextureName = new Textbox(contentManager.Load<SpriteFont>("mainfont"));
         }
 
         /// <summary>
@@ -98,6 +92,7 @@ namespace goltseditor
 
             Load();
             ObjectButtonsInit(contentManager);
+            CreatedTextureName = new Textbox(contentManager.Load<SpriteFont>("mainfont"));
         }
 
         public void Update(ContentManager contentManager)
@@ -163,28 +158,13 @@ namespace goltseditor
             {
                 CurrentlyCreatedObject.Update(contentManager, this);
 
-                TimeSinceTextureChange++;
-
-                if(TimeSinceTextureChange>10)
-                {
-                    if(ks.IsKeyDown(Keys.Left))
-                    {
-                        TimeSinceTextureChange = 0;
-                        currentTextureNumber--;
-                        currentTextureNumber += textureNames.Count;
-                        currentTextureNumber %= textureNames.Count;
-                    }
-
-                    if (ks.IsKeyDown(Keys.Right))
-                    {
-                        TimeSinceTextureChange = 0;
-                        currentTextureNumber++;
-                        currentTextureNumber %= textureNames.Count;
-                    }
-                }
+                CreatedTextureName.Update(10, 10,
+                    (int)CreatedTextureName.CharDimensions.X * (CreatedTextureName.Contents.Length+1),
+                    (int)CreatedTextureName.CharDimensions.Y);
 
                 if(CurrentlyCreatedObject is PhysicalObject 
-                    && ms.LeftButton==ButtonState.Released && PreviousMouseState.LeftButton==ButtonState.Pressed)
+                    && ms.LeftButton==ButtonState.Released && PreviousMouseState.LeftButton==ButtonState.Pressed&&
+                    !CreatedTextureName.Selected)
                 {
                     ((PhysicalObject)CurrentlyCreatedObject).Hitbox.HitboxPoints.Add(new Tuple<double, double>(ms.X - 960, ms.Y - 540));
                 }
@@ -252,6 +232,8 @@ namespace goltseditor
             }
             else if(CurrentInterfaceStage==2)
             {
+                CreatedTextureName.Draw(spriteBatch, 10, 10, Color.White, Color.Black, 1f);
+
                 CurrentlyCreatedObject.Draw(960, 540, spriteBatch, 0.9f, Game1.StandardScale, Color.White, SpriteEffects.None);
 
                 if (CurrentlyCreatedObject is PhysicalObject)
@@ -267,7 +249,7 @@ namespace goltseditor
                         double rot = Game1.GetDirection(new Tuple<double, double>(PreviousMouseState.X, PreviousMouseState.Y),
                             lq);
                         double scale = Game1.GetDistance(lq, new Tuple<double, double>(PreviousMouseState.X, PreviousMouseState.Y));
-
+                        
                         spriteBatch.Draw(Game1.OnePixel,
                             new Vector2(960 + (int)ps.Hitbox.HitboxPoints[ls].Item1, 540 + (int)ps.Hitbox.HitboxPoints[ls].Item2),
                             null, Color.Red, (float)rot, new Vector2(0, 0), new Vector2((float)scale, 2), SpriteEffects.None, 1f);

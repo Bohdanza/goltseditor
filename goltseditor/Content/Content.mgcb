@@ -37,6 +37,13 @@
 /processorParam:TextureFormat=Color
 /build:hero_id_0.png
 
+#begin mainfont.spritefont
+/importer:FontDescriptionImporter
+/processor:FontDescriptionProcessor
+/processorParam:PremultiplyAlpha=True
+/processorParam:TextureFormat=Compressed
+/build:mainfont.spritefont
+
 #begin missingtexture.png
 /importer:TextureImporter
 /processor:TextureProcessor
