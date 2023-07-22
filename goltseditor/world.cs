@@ -9,11 +9,21 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using Newtonsoft.Json;
+using System.Drawing;
+
+using Color = Microsoft.Xna.Framework.Color;
 
 namespace goltseditor
 {
     public class World
     {
+        private int TimeSinceTextureChange = 11, currentTextureNumber=0;
+
+        public List<string> textureNames = new List<string>
+        {
+            "goltsov_",
+        };
+
         public Button btn { get; private set; } = null;
         private  List<Button> ObjectButtons { get; set; }
         public WorldObject CurrentlyCreatedObject { get; protected set; } = null;
@@ -28,7 +38,7 @@ namespace goltseditor
 
         public ObjectList objects { get; private set; }
         public List<WorldObject> AvaliableObjects { get; protected set; }
-        
+
         //why not
         public WorldObject Camera { get; private set; }
 
@@ -70,6 +80,8 @@ namespace goltseditor
                     new Tuple<double, double>(200, -20),
                     new Tuple<double, double>(-200, -20),
                 }));
+
+            ObjectButtonsInit(contentManager);
         }
 
         /// <summary>
@@ -77,7 +89,7 @@ namespace goltseditor
         /// </summary>
         /// <param name="contentManager"></param>
         /// <param name="path"></param>
-        public World(string path)
+        public World(string path, ContentManager contentManager)
         {
             if (path[path.Length - 1] != '\\')
                 path += "\\";
@@ -85,6 +97,7 @@ namespace goltseditor
             Path = path;
 
             Load();
+            ObjectButtonsInit(contentManager);
         }
 
         public void Update(ContentManager contentManager)
@@ -136,6 +149,51 @@ namespace goltseditor
             }
             else if(CurrentInterfaceStage==1)
             {
+                for (int i = 0; i < ObjectButtons.Count; i++)
+                {
+                    ObjectButtons[i].Update();
+                    if (ObjectButtons[i].pressed)
+                    {
+                        CurrentInterfaceStage = 2;
+                        CreatedObjectInit(contentManager, i);
+                    }
+                }
+            }
+            else if(CurrentInterfaceStage==2)
+            {
+                CurrentlyCreatedObject.Update(contentManager, this);
+
+                TimeSinceTextureChange++;
+
+                if(TimeSinceTextureChange>10)
+                {
+                    if(ks.IsKeyDown(Keys.Left))
+                    {
+                        TimeSinceTextureChange = 0;
+                        currentTextureNumber--;
+                        currentTextureNumber += textureNames.Count;
+                        currentTextureNumber %= textureNames.Count;
+                    }
+
+                    if (ks.IsKeyDown(Keys.Right))
+                    {
+                        TimeSinceTextureChange = 0;
+                        currentTextureNumber++;
+                        currentTextureNumber %= textureNames.Count;
+                    }
+                }
+
+                if(CurrentlyCreatedObject is PhysicalObject 
+                    && ms.LeftButton==ButtonState.Released && PreviousMouseState.LeftButton==ButtonState.Pressed)
+                {
+                    ((PhysicalObject)CurrentlyCreatedObject).Hitbox.HitboxPoints.Add(new Tuple<double, double>(ms.X - 960, ms.Y - 540));
+                }
+
+                if(ks.IsKeyDown(Keys.Enter))
+                {
+                    AvaliableObjects.Add(CurrentlyCreatedObject);
+                    CurrentInterfaceStage = 0;
+                }
             }
 
             PreviousMouseState = ms;
@@ -187,6 +245,61 @@ namespace goltseditor
                         ((PhysicalObject)AvaliableObjects[SelectedAvaliableObject]).Hitbox.Draw(ms.X, ms.Y, spriteBatch, 1f, Color.White);
                 }
             }
+            else if(CurrentInterfaceStage==1)
+            {
+                for (int i = 0; i < ObjectButtons.Count; i++)
+                    ObjectButtons[i].Draw(spriteBatch);
+            }
+            else if(CurrentInterfaceStage==2)
+            {
+                CurrentlyCreatedObject.Draw(960, 540, spriteBatch, 0.9f, Game1.StandardScale, Color.White, SpriteEffects.None);
+
+                if (CurrentlyCreatedObject is PhysicalObject)
+                {
+                    PhysicalObject ps = (PhysicalObject)CurrentlyCreatedObject;
+
+                    ps.Hitbox.Draw(960, 540, spriteBatch, 1f, Color.White);
+
+                    if (ps.Hitbox.HitboxPoints.Count > 0)
+                    {
+                        int ls = ps.Hitbox.HitboxPoints.Count - 1;
+                        Tuple<double, double> lq = new Tuple<double, double>(ps.Hitbox.HitboxPoints[ls].Item1 + 960, ps.Hitbox.HitboxPoints[ls].Item2 + 540);
+                        double rot = Game1.GetDirection(new Tuple<double, double>(PreviousMouseState.X, PreviousMouseState.Y),
+                            lq);
+                        double scale = Game1.GetDistance(lq, new Tuple<double, double>(PreviousMouseState.X, PreviousMouseState.Y));
+
+                        spriteBatch.Draw(Game1.OnePixel,
+                            new Vector2(960 + (int)ps.Hitbox.HitboxPoints[ls].Item1, 540 + (int)ps.Hitbox.HitboxPoints[ls].Item2),
+                            null, Color.Red, (float)rot, new Vector2(0, 0), new Vector2((float)scale, 2), SpriteEffects.None, 1f);
+
+                        ls = 0;
+
+                        lq = new Tuple<double, double>(ps.Hitbox.HitboxPoints[ls].Item1 + 960, ps.Hitbox.HitboxPoints[ls].Item2 + 540);
+                        rot = Game1.GetDirection(new Tuple<double, double>(PreviousMouseState.X, PreviousMouseState.Y),
+                            lq);
+                        scale = Game1.GetDistance(lq, new Tuple<double, double>(PreviousMouseState.X, PreviousMouseState.Y));
+
+                        spriteBatch.Draw(Game1.OnePixel,
+                            new Vector2(960 + (int)ps.Hitbox.HitboxPoints[ls].Item1, 540 + (int)ps.Hitbox.HitboxPoints[ls].Item2),
+                            null, Color.Red, (float)rot, new Vector2(0, 0), new Vector2((float)scale, 2), SpriteEffects.None, 1f);
+
+                    }
+                }
+            }
+        }
+
+        private void ObjectButtonsInit(ContentManager contentManager)
+        {
+            ObjectButtons = new List<Button>();
+
+            ObjectButtons.Add(new Button(0, 10, 10, 160, 160,
+                 contentManager.Load<Texture2D>("physicalcreatereleased"), contentManager.Load<Texture2D>("physicalcreatepressed")));
+        }   
+
+        private void CreatedObjectInit(ContentManager contentManager, int index)
+        {
+            if (index == 0)
+                CurrentlyCreatedObject = new Obstacle(contentManager, 0, 0, "", new List<Tuple<double, double>>());
         }
 
         public void Save()
