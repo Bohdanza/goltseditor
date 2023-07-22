@@ -12,7 +12,7 @@ using System.Runtime.InteropServices;
 //I took it from another project, so style is not good
 namespace goltseditor
 {
-    public class button
+    public class Button
     {
         public int x, y, width, height;
         public Texture2D NormalTexture { get; private set; }
@@ -39,7 +39,7 @@ namespace goltseditor
         /// <param name="pressed_texture">Texture when pressed</param>
         /// <param name="spriteFont">Font</param>
         /// <param name="text">Text</param>
-        public button(int type, int x, int y, int width, int height, Texture2D normal_texture, Texture2D pressed_texture, SpriteFont spriteFont, string text, Color color)
+        public Button(int type, int x, int y, int width, int height, Texture2D normal_texture, Texture2D pressed_texture, SpriteFont spriteFont, string text, Color color)
         {
             this.type = type;
 
@@ -58,7 +58,7 @@ namespace goltseditor
             this.textColor = color;
         }
 
-        public button(int type, int x, int y, int width, int height, Texture2D normal_texture, Texture2D pressed_texture)
+        public Button(int type, int x, int y, int width, int height, Texture2D normal_texture, Texture2D pressed_texture)
         {
             this.type = type;
 
@@ -75,7 +75,7 @@ namespace goltseditor
             this.text = null;
         }
 
-        public void update()
+        public void Update()
         {
             var mouseState = Mouse.GetState();
 
@@ -114,7 +114,7 @@ namespace goltseditor
             this.oldState = mouseState;
         }
 
-        public void draw(SpriteBatch spriteBatch)
+        public void Draw(SpriteBatch spriteBatch)
         {
             if (this.type == 0)
             {

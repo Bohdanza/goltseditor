@@ -14,7 +14,9 @@ namespace goltseditor
 {
     public class World
     {
-        public button btn { get; private set; } = null;
+        public Button btn { get; private set; } = null;
+        private  List<Button> ObjectButtons { get; set; }
+        public WorldObject CurrentlyCreatedObject { get; protected set; } = null;
         //1920*3
         public const int MaxLoadedSize = 5760;
 
@@ -26,7 +28,7 @@ namespace goltseditor
 
         public ObjectList objects { get; private set; }
         public List<WorldObject> AvaliableObjects { get; protected set; }
-
+        
         //why not
         public WorldObject Camera { get; private set; }
 
@@ -88,7 +90,7 @@ namespace goltseditor
         public void Update(ContentManager contentManager)
         {
             if (btn == null)
-                btn = new button(0, AvObjectsXBound, 1000, 280, 108,
+                btn = new Button(0, AvObjectsXBound, 1000, 280, 108,
                     contentManager.Load<Texture2D>("newreleased"), contentManager.Load<Texture2D>("newpressed"));
 
             for (int i = 0; i < AvaliableObjects.Count; i++)
@@ -127,10 +129,13 @@ namespace goltseditor
                 SelectedAvaliableObject = Math.Max(SelectedAvaliableObject, 0);
                 SelectedAvaliableObject = Math.Min(SelectedAvaliableObject, AvaliableObjects.Count - 1);
 
-                btn.update();
+                btn.Update();
 
                 if (btn.pressed)
                     CurrentInterfaceStage = 1;
+            }
+            else if(CurrentInterfaceStage==1)
+            {
             }
 
             PreviousMouseState = ms;
@@ -140,7 +145,7 @@ namespace goltseditor
         {
             if (CurrentInterfaceStage == 0)
             {
-                btn.draw(spriteBatch);
+                btn.Draw(spriteBatch);
 
                 spriteBatch.Draw(Game1.OnePixel, new Vector2(0, 0), null, Game1.BackgroundColor, 0f, new Vector2(0, 0),
                     new Vector2(AvObjectsXBound, 1080), SpriteEffects.None, 0.49f);
