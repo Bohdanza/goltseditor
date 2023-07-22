@@ -89,5 +89,16 @@ namespace goltseditor
                 MovementY += y / Weight;
             }
         }
+
+
+        /// <summary>
+        /// Use this instead of adressing texture directly cos mobs have it differently
+        /// </summary>
+        /// <param name="newName"></param>
+        public virtual void ChangeBaseName(ContentManager contentManager, string newName)
+        {
+            if (Texture.BaseName != newName)
+                Texture = new DynamicTexture(contentManager, newName);
+        }
     }
 }

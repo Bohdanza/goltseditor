@@ -162,7 +162,9 @@ namespace goltseditor
                     (int)CreatedTextureName.CharDimensions.X * (CreatedTextureName.Contents.Length+1),
                     (int)CreatedTextureName.CharDimensions.Y);
 
-                if(CurrentlyCreatedObject is PhysicalObject 
+                CurrentlyCreatedObject.ChangeBaseName(contentManager, CreatedTextureName.Contents);
+
+                if (CurrentlyCreatedObject is PhysicalObject 
                     && ms.LeftButton==ButtonState.Released && PreviousMouseState.LeftButton==ButtonState.Pressed&&
                     !CreatedTextureName.Selected)
                 {

@@ -11,6 +11,7 @@ using System.Runtime.InteropServices;
 using Newtonsoft.Json;
 using System.Net.Http.Headers;
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
 
 namespace goltseditor
 {
@@ -28,17 +29,16 @@ namespace goltseditor
 
         private Dictionary<Keys, string> SpecialKeys = new Dictionary<Keys, string>
         {
-            {Keys.Space, " "},
-            {Keys.D0, "0"},
-            {Keys.D1, "1"},
-            {Keys.D2, "2"},
-            {Keys.D3, "3"},
-            {Keys.D4, "4"},
-            {Keys.D5, "5"},
-            {Keys.D6, "6"},
-            {Keys.D7, "7"},
-            {Keys.D8, "8"},
-            {Keys.D9, "9"},
+            {Keys.LeftShift, ""}, {Keys.RightShift, ""}, {Keys.LeftControl, ""}, {Keys.RightControl, ""},
+            {Keys.Space, " "}, {Keys.D0, "0"}, {Keys.D1, "1"}, {Keys.D2, "2"},
+            {Keys.D3, "3"}, {Keys.D4, "4" }, {Keys.D5, "5"}, {Keys.D6, "6"},
+            {Keys.D7, "7"}, {Keys.D8, "8"}, {Keys.D9, "9"}, {Keys.Down, ""},
+            {Keys.Up, ""}, {Keys.Tab, "\t"}, {Keys.Multiply, "*"}, {Keys.OemMinus, "-"}, 
+        };
+        private Dictionary<Keys, string> SpecialShiftKeys = new Dictionary<Keys, string>
+        {
+            {Keys.LeftShift, ""}, {Keys.RightShift, ""}, {Keys.LeftControl, ""}, {Keys.RightControl, ""},
+            {Keys.OemMinus, "_"}
         };
 
         public Textbox(SpriteFont spriteFont)
@@ -82,10 +82,37 @@ namespace goltseditor
                     {
                         string gval = "";
 
-                        if (SpecialKeys.TryGetValue(currentKey, out gval))
-                            Contents = Contents.Insert(CurrentPosition, gval);
+                        if (currentKey == Keys.Back)
+                        {
+                            if(Contents.Length>0&&CurrentPosition>=0&&CurrentPosition<Contents.Length)
+                                Contents = Contents.Remove(CurrentPosition, 1);
+                            
+                            CurrentPosition--;
+                        }
+
+                        if (ks.IsKeyDown(Keys.LeftShift) || ks.IsKeyDown(Keys.RightShift))
+                        {
+                            if (SpecialShiftKeys.TryGetValue(currentKey, out gval))
+                                Contents = Contents.Insert(CurrentPosition, gval);
+                            else
+                                Contents = Contents.Insert(CurrentPosition, currentKey.ToString());
+                        }
                         else
-                            Contents = Contents.Insert(CurrentPosition, currentKey.ToString());
+                        {
+                            string cstr = currentKey.ToString();
+                            StringBuilder cst = new StringBuilder(cstr);
+
+                            if (cst.Length == 1 && cst[0] >= 'A' && cst[0] <= 'Z')
+                            {
+                                cst[0] += (char)32;
+                                cstr = cst.ToString();
+                            }
+
+                            if (SpecialKeys.TryGetValue(currentKey, out gval))
+                                Contents = Contents.Insert(CurrentPosition, gval);
+                            else
+                                Contents = Contents.Insert(CurrentPosition, cstr);
+                        }
 
                         CurrentPosition++;
                     }
