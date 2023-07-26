@@ -36,6 +36,8 @@ namespace goltseditor
         public DynamicTexture Texture { get; protected set; }
         [JsonProperty]
         public float DrawingDepth=0.0f;
+        [JsonProperty]
+        public float ParalaxCoefficient = 1.0f;
 
         [Newtonsoft.Json.JsonConstructor]
         public WorldObject() { }

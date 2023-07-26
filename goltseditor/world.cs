@@ -11,6 +11,7 @@ using System.Runtime.InteropServices;
 using Newtonsoft.Json;
 
 using Color = Microsoft.Xna.Framework.Color;
+using System.Diagnostics.SymbolStore;
 
 namespace goltseditor
 {
@@ -40,9 +41,10 @@ namespace goltseditor
         public int CurrentInterfaceStage { get; protected set; }
 
         private MouseState PreviousMouseState;
-
-        private int AvaliableObjectsOffsetY = 0, AvObjectsXBound=1625;
-        private Textbox CreatedTextureName;
+        
+        private SpriteFont MainFont;
+        private int AvaliableObjectsOffsetY = 0, AvObjectsXBound=1625, CurrentlySelectedNumber=0, LastObjectChange=0;
+        private Textbox CreatedTextureName, SelectedDrawingDepth, SelectedParalaxCoefficient;
 
         //Later these init methods shall be made one for the good code style rejoice.
         //It should automatically check for saves and load or create new depending on found ones
@@ -54,6 +56,8 @@ namespace goltseditor
         /// <param name="path"></param>
         public World(ContentManager contentManager, string path)
         {
+            Camera = new Camera(contentManager, 0, 0, 0, 0, 1);
+
             PreviousMouseState = Mouse.GetState();
 
             if (path[path.Length - 1] != '\\')
@@ -74,8 +78,12 @@ namespace goltseditor
                     new Tuple<double, double>(-200, -20),
                 }));
 
+            MainFont = contentManager.Load<SpriteFont>("mainfont");
+
             ObjectButtonsInit(contentManager);
-            CreatedTextureName = new Textbox(contentManager.Load<SpriteFont>("mainfont"));
+            CreatedTextureName = new Textbox(MainFont);
+            SelectedDrawingDepth = new Textbox(MainFont, true);
+            SelectedParalaxCoefficient = new Textbox(MainFont, true);
         }
 
         /// <summary>
@@ -85,14 +93,21 @@ namespace goltseditor
         /// <param name="path"></param>
         public World(string path, ContentManager contentManager)
         {
+            Camera = new Camera(contentManager, 0, 0, 0, 0, 1);
+
             if (path[path.Length - 1] != '\\')
                 path += "\\";
 
             Path = path;
 
             Load();
+
+            MainFont = contentManager.Load<SpriteFont>("mainfont");
+
             ObjectButtonsInit(contentManager);
-            CreatedTextureName = new Textbox(contentManager.Load<SpriteFont>("mainfont"));
+            CreatedTextureName = new Textbox(MainFont);
+            SelectedDrawingDepth = new Textbox(MainFont, true);
+            SelectedParalaxCoefficient = new Textbox(MainFont, true);
         }
 
         public void Update(ContentManager contentManager)
@@ -114,7 +129,23 @@ namespace goltseditor
 
             if (CurrentInterfaceStage == 0)
             {
-                if (ms.LeftButton == ButtonState.Released && PreviousMouseState.LeftButton == ButtonState.Pressed)
+                SelectedDrawingDepth.Update(0, 0,
+                    (int)((SelectedDrawingDepth.Contents.Length + 1) * SelectedDrawingDepth.CharDimensions.X),
+                    (int)SelectedDrawingDepth.CharDimensions.Y);
+
+                SelectedParalaxCoefficient.Update(0, (int)SelectedDrawingDepth.CharDimensions.Y+5,
+                    (int)((SelectedParalaxCoefficient.Contents.Length + 1) * SelectedParalaxCoefficient.CharDimensions.X), 
+                    (int)SelectedParalaxCoefficient.CharDimensions.Y);
+
+                if(CurrentlySelectedNumber<objects.objects.Count)
+                {
+                    WorldObject wo = objects.objects[CurrentlySelectedNumber];
+                    float.TryParse(SelectedDrawingDepth.Contents, out wo.DrawingDepth);
+                    float.TryParse(SelectedParalaxCoefficient.Contents, out wo.ParalaxCoefficient);
+                }
+
+                if (!SelectedDrawingDepth.Selected && !SelectedParalaxCoefficient.Selected &&
+                    ms.LeftButton == ButtonState.Released && PreviousMouseState.LeftButton == ButtonState.Pressed)
                 {
                     if (ms.X <= AvObjectsXBound && AvaliableObjects.Count > SelectedAvaliableObject)
                     {
@@ -129,13 +160,60 @@ namespace goltseditor
                     }
                 }
 
-                if (ks.IsKeyDown(Keys.Down))
-                    SelectedAvaliableObject++;
-                if (ks.IsKeyDown(Keys.Up))
-                    SelectedAvaliableObject--;
+                if (ms.RightButton == ButtonState.Released && PreviousMouseState.RightButton == ButtonState.Pressed)
+                {
+                    int x1 = ms.X + (int)Camera.X;
+                    int y1 = ms.Y + (int)Camera.Y;
+                    
+                    //TODO: object selection with mouse
+                }
+                
+                LastObjectChange++;
 
-                SelectedAvaliableObject = Math.Max(SelectedAvaliableObject, 0);
-                SelectedAvaliableObject = Math.Min(SelectedAvaliableObject, AvaliableObjects.Count - 1);
+                if (LastObjectChange >= 7)
+                {
+                    bool changed = false;
+
+                    if (ks.IsKeyDown(Keys.Down))
+                    {
+                        SelectedAvaliableObject++;
+                        changed = true;
+                    }
+                    if (ks.IsKeyDown(Keys.Up))
+                    {
+                        SelectedAvaliableObject--;
+                        changed = true;
+                    }
+
+                    if (ks.IsKeyDown(Keys.C))
+                    {
+                        CurrentlySelectedNumber++;
+                        changed = true;
+                    }
+                    if (ks.IsKeyDown(Keys.X))
+                    {
+                        CurrentlySelectedNumber--;
+                        changed = true;
+                    }
+
+                    if (changed)
+                    {
+                        LastObjectChange = 0;
+
+                        if (AvaliableObjects.Count != 0)
+                            SelectedAvaliableObject = (SelectedAvaliableObject + AvaliableObjects.Count) % AvaliableObjects.Count;
+
+                        if (objects.objects.Count != 0)
+                        {
+                            CurrentlySelectedNumber = (CurrentlySelectedNumber + objects.objects.Count) % objects.objects.Count;
+
+                            SelectedDrawingDepth = new Textbox(MainFont, true);
+                            SelectedParalaxCoefficient = new Textbox(MainFont, true);
+                            SelectedDrawingDepth.Contents = objects.objects[CurrentlySelectedNumber].DrawingDepth.ToString();
+                            SelectedParalaxCoefficient.Contents = objects.objects[CurrentlySelectedNumber].ParalaxCoefficient.ToString();
+                        }
+                    }
+                }
 
                 btn.Update();
 
@@ -188,7 +266,7 @@ namespace goltseditor
                 btn.Draw(spriteBatch);
 
                 spriteBatch.Draw(Game1.OnePixel, new Vector2(0, 0), null, Game1.BackgroundColor, 0f, new Vector2(0, 0),
-                    new Vector2(AvObjectsXBound, 1080), SpriteEffects.None, 0.49f);
+                    new Vector2(AvObjectsXBound, 1080), SpriteEffects.None, 0.10001f);
 
                 spriteBatch.Draw(Game1.OnePixel, new Vector2(AvObjectsXBound, 0), null, Game1.BorderColor, 0f, new Vector2(0, 0),
                     new Vector2(2, 1080), SpriteEffects.None, 1f);
@@ -207,13 +285,24 @@ namespace goltseditor
                     }
                 }
 
+                SelectedDrawingDepth.Draw(spriteBatch, 0, 0, Color.White, Color.Black, 1.0f);
+                SelectedParalaxCoefficient.Draw(spriteBatch, 0, (int)SelectedDrawingDepth.CharDimensions.Y+5, 
+                    Color.White, Color.Black, 1.0f);
+
                 foreach (var currentObject in objects.objects)
                 {
                     currentObject.Draw((int)currentObject.X, (int)currentObject.Y, spriteBatch, 0.5f, Game1.StandardScale, Color.White, SpriteEffects.None);
 
                     if (HitboxesShown && currentObject is PhysicalObject)
                         ((PhysicalObject)currentObject).Hitbox.Draw((int)currentObject.X, (int)currentObject.Y,
-                            spriteBatch, 0f, Color.White);
+                            spriteBatch, 0.5f, Color.White);
+                }
+
+                if (CurrentlySelectedNumber < objects.objects.Count)
+                {
+                    WorldObject wo = objects.objects[CurrentlySelectedNumber];
+
+                    wo.Draw((int)wo.X, (int)wo.Y, spriteBatch, 0.6f, Game1.StandardScale, Color.Green, SpriteEffects.None);
                 }
 
                 var ms = PreviousMouseState;

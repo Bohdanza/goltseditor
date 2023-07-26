@@ -18,10 +18,12 @@ namespace goltseditor
     public class Textbox
     {
         public SpriteFont Font { get; private set; }
-        public string Contents { get; private set; }
+        public string Contents { get; set; }
         public int CurrentPosition { get; private set; }
         public KeyboardState PreviousKeyboardState { get; private set; }
         public MouseState PreviousMouseState { get; private set; }
+
+        public bool NumbersOnly { get; private set; }
 
         public bool Selected { get; private set; } = false;
         private int Ctick = 0;
@@ -41,7 +43,7 @@ namespace goltseditor
             {Keys.OemMinus, "_"}
         };
 
-        public Textbox(SpriteFont spriteFont)
+        public Textbox(SpriteFont spriteFont, bool numbersOnly=false)
         {
             Font = spriteFont;
             CurrentPosition = 0;
@@ -51,6 +53,7 @@ namespace goltseditor
             PreviousMouseState = Mouse.GetState();
 
             CharDimensions = Font.MeasureString("A");
+            NumbersOnly = numbersOnly;
         }
 
         public void Update(int x, int y, int width, int height)
@@ -74,7 +77,6 @@ namespace goltseditor
 
             if(Selected)
             {
-                Keys[] cpressed = ks.GetPressedKeys();
                 Keys[] ppressed = PreviousKeyboardState.GetPressedKeys();
             
                 foreach(var currentKey in ppressed)
@@ -87,10 +89,40 @@ namespace goltseditor
                             if(Contents.Length>0&&CurrentPosition>=0&&CurrentPosition<Contents.Length)
                                 Contents = Contents.Remove(CurrentPosition, 1);
                             
+                            CurrentPosition-=2;
+                        }
+                        else if(currentKey==Keys.Left)
+                        {
+                            CurrentPosition-=2;
+                        }
+                        else if (currentKey == Keys.Right)
+                        {}
+                        else if (NumbersOnly)
+                        {
+                            if (currentKey == Keys.OemComma)
+                            {
+                                Contents = Contents.Insert(CurrentPosition, ",");
+                                CurrentPosition++;
+                            }
+
+                            if(currentKey==Keys.OemMinus)
+                            {
+                                Contents = Contents.Insert(CurrentPosition, "-");
+                                CurrentPosition++;
+                            }
+
+                            gval = currentKey.ToString();
+
+                            if (gval.Length == 2 && gval[0] == 'D' && gval[1] >= '0' && gval[1] <= '9')
+                            {
+                                gval = gval.Remove(0, 1);
+                                Contents = Contents.Insert(CurrentPosition, gval);
+                                CurrentPosition++;
+                            }
+                            
                             CurrentPosition--;
                         }
-
-                        if (ks.IsKeyDown(Keys.LeftShift) || ks.IsKeyDown(Keys.RightShift))
+                        else if (ks.IsKeyDown(Keys.LeftShift) || ks.IsKeyDown(Keys.RightShift))
                         {
                             if (SpecialShiftKeys.TryGetValue(currentKey, out gval))
                                 Contents = Contents.Insert(CurrentPosition, gval);
@@ -114,7 +146,9 @@ namespace goltseditor
                                 Contents = Contents.Insert(CurrentPosition, cstr);
                         }
 
-                        CurrentPosition++;
+                        CurrentPosition++; 
+                        CurrentPosition = Math.Min(CurrentPosition, Contents.Length);
+                        CurrentPosition = Math.Max(CurrentPosition, 0);
                     }
 
                 Ctick++;
