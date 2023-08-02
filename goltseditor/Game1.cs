@@ -42,8 +42,8 @@ namespace goltseditor
 
         protected override void Initialize()
         {
-            //world = new World(Content, "saves\\1");
-            world = new World("saves\\1", Content);
+            world = new World(Content, "saves\\1");
+            //world = new World("saves\\1", Content);
             base.Initialize();
         }
 

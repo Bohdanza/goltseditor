@@ -174,6 +174,12 @@ namespace goltseditor
                 {
                     bool changed = false;
 
+                    if(ks.IsKeyDown(Keys.Delete)&&CurrentlySelectedNumber<objects.objects.Count)
+                    {
+                        objects.DeleteObject(objects.objects[CurrentlySelectedNumber]);
+                        changed = true;
+                    }
+
                     if (ks.IsKeyDown(Keys.Down))
                     {
                         SelectedAvaliableObject++;

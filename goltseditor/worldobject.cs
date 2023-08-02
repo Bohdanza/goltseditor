@@ -44,7 +44,7 @@ namespace goltseditor
 
         public WorldObject(ContentManager contentManager, 
             double x, double y, double movementx, double movementy, double weight, bool gravityAffected, 
-            string textureName)
+            string textureName, float paralaxCoefficient=1f)
         {
             X = x;
             Y = y;
@@ -56,6 +56,7 @@ namespace goltseditor
             GravityAffected = gravityAffected;
 
             Texture = new DynamicTexture(contentManager, textureName);
+
         }
 
         public virtual void Update(ContentManager contentManager, World world)

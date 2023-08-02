@@ -65,9 +65,15 @@ namespace goltseditor
             objects.Add(worldObject);
             
             if(worldObject is PhysicalObject)
-            {
                 AddToGrid((PhysicalObject)worldObject);
-            }
+        }
+
+        public void DeleteObject(WorldObject worldObject)
+        {
+            objects.Remove(worldObject);
+
+            if (worldObject is PhysicalObject)
+                DeleteFromGrid((PhysicalObject)worldObject);
         }
 
         private void AddToGrid(PhysicalObject po)
@@ -80,6 +86,18 @@ namespace goltseditor
             for (double i = xBegin; i < xEnd; i += GridCellSize)
                 for (double j = yBegin; j < yEnd; j += GridCellSize)
                     ObjectGrid[(int)(i / GridCellSize), (int)(j / GridCellSize)].Add(po);
+        }
+
+        private void DeleteFromGrid(PhysicalObject po)
+        {
+            double xBegin = Math.Max(0, po.X + po.Hitbox.MinX - GridCellSize);
+            double xEnd = Math.Min(GridSize * GridCellSize, po.X + po.Hitbox.MaxX + GridCellSize);
+            double yBegin = Math.Max(0, po.Y + po.Hitbox.MinY - GridCellSize);
+            double yEnd = Math.Min(GridSize * GridCellSize, po.Y + po.Hitbox.MaxY + GridCellSize);
+
+            for (double i = xBegin; i < xEnd; i += GridCellSize)
+                for (double j = yBegin; j < yEnd; j += GridCellSize)
+                    ObjectGrid[(int)(i / GridCellSize), (int)(j / GridCellSize)].Remove(po);
         }
 
         public void UpdateObjectPosition(PhysicalObject physicalObject, double previousX, double previousY)
