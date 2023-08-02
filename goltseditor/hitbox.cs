@@ -20,13 +20,13 @@ namespace goltseditor
         [JsonProperty]
         public List<Tuple<double, double>> HitboxPoints { get; protected set; }
         [JsonProperty]
-        public double MinX { get; init; }
+        public double MinX { get; private set; }
         [JsonProperty]
-        public double MinY { get; init; }
+        public double MinY { get; private set; }
         [JsonProperty]
-        public double MaxX { get; init; }
+        public double MaxX { get; private set; }
         [JsonProperty]
-        public double MaxY { get; init; }
+        public double MaxY { get; private set; }
 
         [JsonConstructor]
         public ObjectHitbox() { }
@@ -41,10 +41,10 @@ namespace goltseditor
                 lst = Array.ConvertAll(sr.ReadToEnd().Split(' '), int.Parse);
             }
 
-            MinX = 0;
-            MinY = 0;
-            MaxX = 0;
-            MaxY = 0;
+            MinX = 10000000;
+            MinY = 10000000;
+            MaxX = -10000000;
+            MaxY = -10000000;
 
             for (int i = 0; i < lst.Length; i += 2)
             {
@@ -59,10 +59,10 @@ namespace goltseditor
 
         public ObjectHitbox(List<Tuple<double, double>> points)
         {
-            MinX = 0;
-            MinY = 0;
-            MaxX = 0;
-            MaxY = 0;
+            MinX = 10000000;
+            MinY = 10000000;
+            MaxX = -10000000;
+            MaxY = -10000000;
 
             HitboxPoints = points;
 
@@ -152,6 +152,16 @@ namespace goltseditor
                     new Vector2(x + (int)HitboxPoints[i].Item1, y + (int)HitboxPoints[i].Item2),
                     null, color, (float)rot, new Vector2(0, 0), new Vector2((float)scale, 2), SpriteEffects.None, depth);
             }
+        }
+
+        public void AddPoint(double x, double y)
+        {
+            HitboxPoints.Add(new Tuple<double, double>(x, y));
+
+            MinX = Math.Min(MinX, x);
+            MinY = Math.Min(MinY, y);
+            MaxX = Math.Max(MaxX, x);
+            MaxY = Math.Max(MaxY, y);
         }
     }
 }

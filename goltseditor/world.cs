@@ -252,7 +252,7 @@ namespace goltseditor
                     && ms.LeftButton==ButtonState.Released && PreviousMouseState.LeftButton==ButtonState.Pressed&&
                     !CreatedTextureName.Selected)
                 {
-                    ((PhysicalObject)CurrentlyCreatedObject).Hitbox.HitboxPoints.Add(new Tuple<double, double>(ms.X - 960, ms.Y - 540));
+                    ((PhysicalObject)CurrentlyCreatedObject).Hitbox.AddPoint(ms.X - 960, ms.Y - 540);
                 }
 
                 if(ks.IsKeyDown(Keys.Enter))

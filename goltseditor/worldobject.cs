@@ -56,7 +56,6 @@ namespace goltseditor
             GravityAffected = gravityAffected;
 
             Texture = new DynamicTexture(contentManager, textureName);
-
         }
 
         public virtual void Update(ContentManager contentManager, World world)
