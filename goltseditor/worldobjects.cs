@@ -11,6 +11,7 @@ using System.Runtime.InteropServices;
 using Newtonsoft.Json;
 using System.Text.Json.Serialization;
 using System.Diagnostics.CodeAnalysis;
+using goltseditor;
 
 namespace goltseditor
 {
@@ -21,24 +22,20 @@ namespace goltseditor
         [JsonProperty]
         public List<WorldObject> objects { get; private set; }
         [Newtonsoft.Json.JsonIgnore]
-        public List<PhysicalObject>[,] ObjectGrid { get; private set; }
+        public SortedDictionary<int, List<PhysicalObject>[,]> ObjectGrid { get; private set; }
         [JsonProperty]
         public int GridSize { get; private set; }
 
         [Newtonsoft.Json.JsonConstructor]
-        public ObjectList(List<WorldObject> objects, int GridSize) 
+        public ObjectList(List<WorldObject> objects, int GridSize)
         {
             this.GridSize = GridSize;
             this.objects = objects;
-            ObjectGrid = new List<PhysicalObject>[GridSize, GridSize];
+            ObjectGrid = new SortedDictionary<int, List<PhysicalObject>[,]>();
 
-            for (int i = 0; i < GridSize; i++)
-                for (int j = 0; j < GridSize; j++)
-                    ObjectGrid[i, j] = new List<PhysicalObject>();
-
-            foreach(var currentObject in this.objects)
+            foreach (var currentObject in this.objects)
             {
-                if(currentObject is PhysicalObject)
+                if (currentObject is PhysicalObject)
                     AddToGrid((PhysicalObject)currentObject);
             }
         }
@@ -53,39 +50,41 @@ namespace goltseditor
             GridSize = worldSize / GridCellSize;
 
             objects = new List<WorldObject>();
-            ObjectGrid=new List<PhysicalObject>[GridSize, GridSize];
+            ObjectGrid = new SortedDictionary<int, List<PhysicalObject>[,]>();
+        }
 
-            for (int i = 0; i < GridSize; i++)
-                for (int j = 0; j < GridSize; j++)
-                    ObjectGrid[i, j] = new List<PhysicalObject>();
+        public void AddLayer(int layer)
+        {
+            if (!ObjectGrid.ContainsKey(layer))
+            {
+                List<PhysicalObject>[,] tempList = new List<PhysicalObject>[GridSize, GridSize];
+
+                for (int i = 0; i < GridSize; i++)
+                    for (int j = 0; j < GridSize; j++)
+                        tempList[i, j] = new List<PhysicalObject>();
+
+                ObjectGrid.Add(layer, tempList);
+            }
         }
 
         public void AddObject(WorldObject worldObject)
         {
             objects.Add(worldObject);
-            
-            if(worldObject is PhysicalObject)
-                AddToGrid((PhysicalObject)worldObject);
+
+            //if (worldObject is PhysicalObject)
+            //{
+            //    AddToGrid((PhysicalObject)worldObject);
+            //}
         }
 
         public void DeleteObject(WorldObject worldObject)
         {
             objects.Remove(worldObject);
 
-            if (worldObject is PhysicalObject)
-                DeleteFromGrid((PhysicalObject)worldObject);
-        }
-
-        private void AddToGrid(PhysicalObject po)
-        {
-            double xBegin = Math.Max(0, po.X + po.Hitbox.MinX - GridCellSize);
-            double xEnd = Math.Min(GridSize * GridCellSize, po.X + po.Hitbox.MaxX + GridCellSize);
-            double yBegin = Math.Max(0, po.Y + po.Hitbox.MinY - GridCellSize);
-            double yEnd = Math.Min(GridSize * GridCellSize, po.Y + po.Hitbox.MaxY + GridCellSize);
-
-            for (double i = xBegin; i < xEnd; i += GridCellSize)
-                for (double j = yBegin; j < yEnd; j += GridCellSize)
-                    ObjectGrid[(int)(i / GridCellSize), (int)(j / GridCellSize)].Add(po);
+          //  if(worldObject is PhysicalObject)
+         //   {
+        //        DeleteFromGrid((PhysicalObject)worldObject);
+         //   }
         }
 
         private void DeleteFromGrid(PhysicalObject po)
@@ -97,31 +96,46 @@ namespace goltseditor
 
             for (double i = xBegin; i < xEnd; i += GridCellSize)
                 for (double j = yBegin; j < yEnd; j += GridCellSize)
-                    ObjectGrid[(int)(i / GridCellSize), (int)(j / GridCellSize)].Remove(po);
+                    ObjectGrid[po.CollisionLayer][(int)(i / GridCellSize), (int)(j / GridCellSize)].Remove(po);
+        }
+
+        private void AddToGrid(PhysicalObject po)
+        {
+            int layer = po.CollisionLayer;
+            AddLayer(layer);
+
+            double xBegin = Math.Max(0, po.X + po.Hitbox.MinX - GridCellSize);
+            double xEnd = Math.Min(GridSize * GridCellSize, po.X + po.Hitbox.MaxX + GridCellSize);
+            double yBegin = Math.Max(0, po.Y + po.Hitbox.MinY - GridCellSize);
+            double yEnd = Math.Min(GridSize * GridCellSize, po.Y + po.Hitbox.MaxY + GridCellSize);
+
+            for (double i = xBegin; i < xEnd; i += GridCellSize)
+                for (double j = yBegin; j < yEnd; j += GridCellSize)
+                    ObjectGrid[layer][(int)(i / GridCellSize), (int)(j / GridCellSize)].Add(po);
         }
 
         public void UpdateObjectPosition(PhysicalObject physicalObject, double previousX, double previousY)
         {
-            if ((int)(physicalObject.X / GridCellSize) != (int)(previousX / GridCellSize)|| 
+            if ((int)(physicalObject.X / GridCellSize) != (int)(previousX / GridCellSize) ||
                 (int)(physicalObject.Y / GridCellSize) != (int)(previousY / GridCellSize))
             {
-                double xBegin = Math.Max(0, previousX + physicalObject.Hitbox.MinX-GridCellSize);
-                double xEnd = Math.Min(GridSize * GridCellSize, previousX + physicalObject.Hitbox.MaxX+GridCellSize);
+                double xBegin = Math.Max(0, previousX + physicalObject.Hitbox.MinX - GridCellSize);
+                double xEnd = Math.Min(GridSize * GridCellSize, previousX + physicalObject.Hitbox.MaxX + GridCellSize);
                 double yBegin = Math.Max(0, previousY + physicalObject.Hitbox.MinY - GridCellSize);
-                double yEnd = Math.Min(GridSize * GridCellSize, previousY + physicalObject.Hitbox.MaxY+GridCellSize);
+                double yEnd = Math.Min(GridSize * GridCellSize, previousY + physicalObject.Hitbox.MaxY + GridCellSize);
 
                 for (double i = xBegin; i < xEnd; i += GridCellSize)
                     for (double j = yBegin; j < yEnd; j += GridCellSize)
-                        ObjectGrid[(int)(i / GridCellSize), (int)(j / GridCellSize)].Remove(physicalObject);
+                        ObjectGrid[physicalObject.CollisionLayer][(int)(i / GridCellSize), (int)(j / GridCellSize)].Remove(physicalObject);
 
                 xBegin = Math.Max(0, physicalObject.X + physicalObject.Hitbox.MinX - GridCellSize);
-                xEnd = Math.Min(GridSize * GridCellSize, physicalObject.X + physicalObject.Hitbox.MaxX+ GridCellSize);
+                xEnd = Math.Min(GridSize * GridCellSize, physicalObject.X + physicalObject.Hitbox.MaxX + GridCellSize);
                 yBegin = Math.Max(0, physicalObject.Y + physicalObject.Hitbox.MinY - GridCellSize);
                 yEnd = Math.Min(GridSize * GridCellSize, physicalObject.Y + physicalObject.Hitbox.MaxY + GridCellSize);
 
                 for (double i = xBegin; i < xEnd; i += GridCellSize)
                     for (double j = yBegin; j < yEnd; j += GridCellSize)
-                        ObjectGrid[(int)(i / GridCellSize), (int)(j / GridCellSize)].Add(physicalObject);
+                        ObjectGrid[physicalObject.CollisionLayer][(int)(i / GridCellSize), (int)(j / GridCellSize)].Add(physicalObject);
             }
         }
 
@@ -130,7 +144,7 @@ namespace goltseditor
         /// </summary>
         /// <param name="physicalObject"></param>
         /// <returns></returns>
-        public HashSet<PhysicalObject> GetNearbyObjects(PhysicalObject physicalObject)
+        public HashSet<PhysicalObject> GetNearbyObjects(PhysicalObject physicalObject, int layer)
         {
             HashSet<PhysicalObject> objects = new HashSet<PhysicalObject>();
 
@@ -141,7 +155,7 @@ namespace goltseditor
 
             for (double i = xBegin; i < xEnd; i += GridCellSize)
                 for (double j = yBegin; j < yEnd; j += GridCellSize)
-                    objects.UnionWith(ObjectGrid[(int)(i / GridCellSize), (int)(j / GridCellSize)]);
+                    objects.UnionWith(ObjectGrid[layer][(int)(i / GridCellSize), (int)(j / GridCellSize)]);
 
             return objects;
         }

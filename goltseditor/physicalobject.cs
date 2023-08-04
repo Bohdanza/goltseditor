@@ -22,7 +22,7 @@ namespace goltseditor
         public ObjectHitbox Hitbox { get; protected set; }
 
         [JsonProperty]
-        public double HitboxLayer { get; protected set; }
+        public int CollisionLayer { get; protected set; }
 
         [JsonIgnore]
         protected bool CollidedY = false, CollidedX = false;
@@ -32,20 +32,20 @@ namespace goltseditor
 
         public PhysicalObject(ContentManager contentManager, 
             double x, double y, double movementx, double movementy, double weight, bool gravityAffected,
-            string textureName,  string hitboxPath, double hitboxLayer=0):
+            string textureName,  string hitboxPath, int collisionLayer = 0):
             base(contentManager, x, y, movementx, movementy, weight, gravityAffected, textureName)
         {
             Hitbox = new ObjectHitbox(hitboxPath);
-            HitboxLayer = hitboxLayer;
+            CollisionLayer = collisionLayer;
         }
 
         public PhysicalObject(ContentManager contentManager, 
             double x, double y, double movementx, double movementy, double weight, bool gravityAffected,
-            string textureName, List<Tuple<double, double>> hitbox, double hitboxLayer=0) :
+            string textureName, List<Tuple<double, double>> hitbox, int collisionLayer = 0) :
             base(contentManager, x, y, movementx, movementy, weight, gravityAffected, textureName)
         {
             Hitbox = new ObjectHitbox(hitbox);
-            HitboxLayer = hitboxLayer;
+            CollisionLayer = collisionLayer;
         }
 
         public override void Update(ContentManager contentManager, World world)
