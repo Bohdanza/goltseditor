@@ -44,7 +44,7 @@ namespace goltseditor
         
         private SpriteFont MainFont;
         private int AvaliableObjectsOffsetY = 0, AvObjectsXBound=1625, CurrentlySelectedNumber=0, LastObjectChange=0;
-        private Textbox CreatedTextureName, SelectedDrawingDepth, SelectedParalaxCoefficient;
+        private Textbox CreatedTextureName, SelectedDrawingDepth, SelectedParalaxCoefficient, SelectedRoomTransfer, SelectedExitIndex;
 
         //Later these init methods shall be made one for the good code style rejoice.
         //It should automatically check for saves and load or create new depending on found ones
@@ -84,6 +84,8 @@ namespace goltseditor
             CreatedTextureName = new Textbox(MainFont);
             SelectedDrawingDepth = new Textbox(MainFont, true);
             SelectedParalaxCoefficient = new Textbox(MainFont, true);
+            SelectedRoomTransfer = new Textbox(MainFont, true);
+            SelectedExitIndex = new Textbox(MainFont, true);
         }
 
         /// <summary>
@@ -108,6 +110,8 @@ namespace goltseditor
             CreatedTextureName = new Textbox(MainFont);
             SelectedDrawingDepth = new Textbox(MainFont, true);
             SelectedParalaxCoefficient = new Textbox(MainFont, true);
+            SelectedRoomTransfer = new Textbox(MainFont, true);
+            SelectedExitIndex = new Textbox(MainFont, true);
         }
 
         public void Update(ContentManager contentManager)
@@ -140,8 +144,43 @@ namespace goltseditor
                 if(CurrentlySelectedNumber<objects.objects.Count)
                 {
                     WorldObject wo = objects.objects[CurrentlySelectedNumber];
+
                     float.TryParse(SelectedDrawingDepth.Contents, out wo.DrawingDepth);
                     float.TryParse(SelectedParalaxCoefficient.Contents, out wo.ParalaxCoefficient);
+
+                    if (wo is Portal)
+                    {
+                        SelectedRoomTransfer.Update(0,
+                            (int)SelectedDrawingDepth.CharDimensions.Y + (int)SelectedParalaxCoefficient.CharDimensions.Y + 10,
+                            (int)((SelectedRoomTransfer.Contents.Length + 1) * SelectedRoomTransfer.CharDimensions.X),
+                            (int)SelectedRoomTransfer.CharDimensions.Y);
+
+                        SelectedExitIndex.Update(0,
+                            (int)SelectedDrawingDepth.CharDimensions.Y + (int)SelectedParalaxCoefficient.CharDimensions.Y+
+                            (int)SelectedRoomTransfer.CharDimensions.Y + 15,
+                            (int)((SelectedExitIndex.Contents.Length + 1) * SelectedExitIndex.CharDimensions.X),
+                            (int)SelectedExitIndex.CharDimensions.Y);
+
+                        int newRoomIndex = ((Portal)wo).RoomIndex;
+                        int newExitIndex = ((Portal)wo).ExitPointIndex;
+
+                        try
+                        {
+                            int q = int.Parse(SelectedRoomTransfer.Contents);
+                            newRoomIndex = q;
+                        }
+                        catch { }
+
+                        try
+                        {
+                            int q = int.Parse(SelectedExitIndex.Contents);
+                            newExitIndex = q;
+                        }
+                        catch { }
+
+                        ((Portal)wo).RoomIndex=newRoomIndex;
+                        ((Portal)wo).ExitPointIndex = newExitIndex;
+                    }
                 }
 
                 if (!SelectedDrawingDepth.Selected && !SelectedParalaxCoefficient.Selected &&
@@ -217,6 +256,14 @@ namespace goltseditor
                             SelectedParalaxCoefficient = new Textbox(MainFont, true);
                             SelectedDrawingDepth.Contents = objects.objects[CurrentlySelectedNumber].DrawingDepth.ToString();
                             SelectedParalaxCoefficient.Contents = objects.objects[CurrentlySelectedNumber].ParalaxCoefficient.ToString();
+                        
+                            if(objects.objects[CurrentlySelectedNumber] is Portal)
+                            {
+                                SelectedRoomTransfer = new Textbox(MainFont, true);
+                                SelectedExitIndex = new Textbox(MainFont, true);
+                                SelectedRoomTransfer.Contents = ((Portal)objects.objects[CurrentlySelectedNumber]).RoomIndex.ToString();
+                                SelectedExitIndex.Contents = ((Portal)objects.objects[CurrentlySelectedNumber]).ExitPointIndex.ToString();
+                            }
                         }
                     }
                 }
@@ -294,6 +341,18 @@ namespace goltseditor
                 SelectedDrawingDepth.Draw(spriteBatch, 0, 0, Color.White, Color.Black, 1.0f);
                 SelectedParalaxCoefficient.Draw(spriteBatch, 0, (int)SelectedDrawingDepth.CharDimensions.Y+5, 
                     Color.White, Color.Black, 1.0f);
+
+                if (CurrentlySelectedNumber < objects.objects.Count && objects.objects[CurrentlySelectedNumber] is Portal)
+                {
+                    SelectedRoomTransfer.Draw(spriteBatch, 0,
+                        (int)SelectedDrawingDepth.CharDimensions.Y + (int)SelectedParalaxCoefficient.CharDimensions.Y + 10,
+                        Color.White, Color.Black, 1f);
+
+                    SelectedExitIndex.Draw(spriteBatch, 0,
+                        (int)SelectedDrawingDepth.CharDimensions.Y + (int)SelectedParalaxCoefficient.CharDimensions.Y + 
+                        (int)SelectedRoomTransfer.CharDimensions.Y + 15,
+                        Color.White, Color.Black, 1f);
+                }
 
                 foreach (var currentObject in objects.objects)
                 {
@@ -373,12 +432,17 @@ namespace goltseditor
 
             ObjectButtons.Add(new Button(0, 10, 10, 160, 160,
                  contentManager.Load<Texture2D>("physicalcreatereleased"), contentManager.Load<Texture2D>("physicalcreatepressed")));
+
+            ObjectButtons.Add(new Button(0, 170, 10, 160, 160,
+                contentManager.Load<Texture2D>("portalcreatereleased"), contentManager.Load<Texture2D>("portalcreatepressed")));
         }   
 
         private void CreatedObjectInit(ContentManager contentManager, int index)
         {
             if (index == 0)
                 CurrentlyCreatedObject = new Obstacle(contentManager, 0, 0, "", new List<Tuple<double, double>>());
+            if (index == 1)
+                CurrentlyCreatedObject = new Portal(contentManager, 0, 0, 0, 0, 1, false, "", new List<Tuple<double, double>>(), 0, 0);
         }
 
         public void Save()
