@@ -334,12 +334,17 @@ namespace goltseditor
 
             ObjectButtons.Add(new Button(0, 10, 10, 160, 160,
                  contentManager.Load<Texture2D>("physicalcreatereleased"), contentManager.Load<Texture2D>("physicalcreatepressed")));
+
+            ObjectButtons.Add(new Button(0, 170, 10, 160, 160,
+                contentManager.Load<Texture2D>("portalcreatereleased"), contentManager.Load<Texture2D>("portalcreatepressed")));
         }   
 
         private void CreatedObjectInit(ContentManager contentManager, int index)
         {
             if (index == 0)
                 CurrentlyCreatedObject = new Obstacle(contentManager, 0, 0, "", new List<Tuple<double, double>>());
+            if (index == 1)
+                CurrentlyCreatedObject = new Portal(contentManager, 0, 0, 0, 0, 1, false, "", new List<Tuple<double, double>>(), 0, 0);
         }
 
         public void Save()
