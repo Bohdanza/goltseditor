@@ -33,6 +33,7 @@ namespace goltseditor
 
         public override void Update(ContentManager contentManager, World world)
         {
+            Texture.Update(contentManager);
         }
     }
 
