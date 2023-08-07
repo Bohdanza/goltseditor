@@ -10,6 +10,8 @@ namespace goltseditor
     {
         public static Texture2D NoTexture;
         public static Texture2D OnePixel;
+        public static SpriteFont MonospaceFont;
+
         public static float StandardScale = 4f;
         public static Color BackgroundColor { get; protected set; } = new Color(175, 175, 175);
         public static Color BorderColor { get; protected set; } = Color.Black;
@@ -42,8 +44,10 @@ namespace goltseditor
 
         protected override void Initialize()
         {
-            //world = new World(Content, "saves\\1");
-            world = new World("saves\\1", Content);
+            MonospaceFont = Content.Load<SpriteFont>("mainfont");
+
+            world = new World(Content, "saves\\1");
+            //world = new World("saves\\1", Content);
             base.Initialize();
         }
 
@@ -52,6 +56,7 @@ namespace goltseditor
             _spriteBatch = new SpriteBatch(GraphicsDevice);
 
             NoTexture = Content.Load<Texture2D>("missingtexture");
+            OnePixel = Content.Load<Texture2D>("onepixel");
             OnePixel = Content.Load<Texture2D>("onepixel");
         }
 

@@ -15,6 +15,9 @@ namespace goltseditor
     public abstract class WorldObject
     {
         [JsonIgnore]
+        public TextboxList Parameters { get; protected set; }
+
+        [JsonIgnore]
         protected double PrevFallingSpeed = 3;
         public const double StandartFallingSpeed = 3;
 
@@ -40,7 +43,10 @@ namespace goltseditor
         public float ParalaxCoefficient = 1.0f;
 
         [Newtonsoft.Json.JsonConstructor]
-        public WorldObject() { }
+        public WorldObject() 
+        {
+            InitParams();
+        }
 
         public WorldObject(ContentManager contentManager, 
             double x, double y, double movementx, double movementy, double weight, bool gravityAffected, 
@@ -55,7 +61,11 @@ namespace goltseditor
             Weight = weight;
             GravityAffected = gravityAffected;
 
+            ParalaxCoefficient = paralaxCoefficient;
+
             Texture = new DynamicTexture(contentManager, textureName);
+
+            InitParams();
         }
 
         public virtual void Update(ContentManager contentManager, World world)
@@ -78,6 +88,21 @@ namespace goltseditor
                 null, color, 0f, new Vector2(0, 0), scale, spriteEffects, depth + DrawingDepth);
         }
 
+        protected virtual void InitParams()
+        {
+            Parameters = new TextboxList();
+
+            Parameters.AddTextbox(new Textbox(Game1.MonospaceFont),
+                new Ref(() => Texture.BaseName, x => { ChangeBaseName((string)x); }),
+                x => { return x; },
+                x => { return (string)x; });
+
+            Parameters.AddTextbox(new Textbox(Game1.MonospaceFont, true),
+                new Ref(() => DrawingDepth, x => { DrawingDepth = (float)x; }),
+                x => { return float.Parse(x); },
+                x => { return ((float)x).ToString(); });
+        }
+
         /// <summary>
         /// Adds x and y to MovementX and MovementY respectively taking weight into account
         /// </summary>
@@ -92,15 +117,14 @@ namespace goltseditor
             }
         }
 
-
         /// <summary>
         /// Use this instead of adressing texture directly cos mobs have it differently
         /// </summary>
         /// <param name="newName"></param>
-        public virtual void ChangeBaseName(ContentManager contentManager, string newName)
+        public virtual void ChangeBaseName(string newName)
         {
             if (Texture.BaseName != newName)
-                Texture = new DynamicTexture(contentManager, newName);
+                Texture.ChangeBaseName(newName);
         }
     }
 }

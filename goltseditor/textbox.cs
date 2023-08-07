@@ -24,6 +24,7 @@ namespace goltseditor
         public MouseState PreviousMouseState { get; private set; }
 
         public bool NumbersOnly { get; private set; }
+        public bool CommaAllowed { get; private set; }
 
         public bool Selected { get; private set; } = false;
         private int Ctick = 0;
@@ -43,7 +44,7 @@ namespace goltseditor
             {Keys.OemMinus, "_"}
         };
 
-        public Textbox(SpriteFont spriteFont, bool numbersOnly=false)
+        public Textbox(SpriteFont spriteFont, bool numbersOnly=false, bool commaAllowed=true)
         {
             Font = spriteFont;
             CurrentPosition = 0;
@@ -54,6 +55,7 @@ namespace goltseditor
 
             CharDimensions = Font.MeasureString("A");
             NumbersOnly = numbersOnly;
+            CommaAllowed = commaAllowed;
         }
 
         public void Update(int x, int y, int width, int height)
@@ -74,6 +76,8 @@ namespace goltseditor
                     Ctick = 30;
                 }
             }
+
+
 
             if(Selected)
             {
@@ -97,14 +101,16 @@ namespace goltseditor
                         }
                         else if (currentKey == Keys.Right)
                         {}
-                        else if (NumbersOnly)
+                        else if(currentKey==Keys.OemComma)
                         {
-                            if (currentKey == Keys.OemComma)
+                            if(CommaAllowed)
                             {
                                 Contents = Contents.Insert(CurrentPosition, ",");
                                 CurrentPosition++;
                             }
-
+                        }
+                        else if (NumbersOnly)
+                        {
                             if(currentKey==Keys.OemMinus)
                             {
                                 Contents = Contents.Insert(CurrentPosition, "-");

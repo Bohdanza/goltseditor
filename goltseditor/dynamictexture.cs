@@ -112,5 +112,11 @@ namespace goltseditor
             else
                 return Game1.NoTexture;
         }
+
+        public void ChangeBaseName(string baseName)
+        {
+            BaseName = baseName;
+            loaded = false;
+        }
     }
 }

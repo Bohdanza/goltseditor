@@ -42,13 +42,11 @@ namespace goltseditor
 
         private MouseState PreviousMouseState;
         
-        private SpriteFont MainFont;
-        private int AvaliableObjectsOffsetY = 0, AvObjectsXBound=1625, CurrentlySelectedNumber=0, LastObjectChange=0;
-        private Textbox CreatedTextureName, SelectedDrawingDepth, SelectedParalaxCoefficient;
+        public int AvaliableObjectsOffsetY = 0, AvObjectsXBound=1625, CurrentlySelectedNumber=0, LastObjectChange=0,
+            MinimalXBorder=100;
 
         //Later these init methods shall be made one for the good code style rejoice.
         //It should automatically check for saves and load or create new depending on found ones
-
         /// <summary>
         /// Use this to init new world TEMPORARILY
         /// </summary>
@@ -78,12 +76,7 @@ namespace goltseditor
                     new Tuple<double, double>(-200, -20),
                 }));
 
-            MainFont = contentManager.Load<SpriteFont>("mainfont");
-
             ObjectButtonsInit(contentManager);
-            CreatedTextureName = new Textbox(MainFont);
-            SelectedDrawingDepth = new Textbox(MainFont, true);
-            SelectedParalaxCoefficient = new Textbox(MainFont, true);
         }
 
         /// <summary>
@@ -102,12 +95,7 @@ namespace goltseditor
 
             Load();
 
-            MainFont = contentManager.Load<SpriteFont>("mainfont");
-
             ObjectButtonsInit(contentManager);
-            CreatedTextureName = new Textbox(MainFont);
-            SelectedDrawingDepth = new Textbox(MainFont, true);
-            SelectedParalaxCoefficient = new Textbox(MainFont, true);
         }
 
         public void Update(ContentManager contentManager)
@@ -129,35 +117,25 @@ namespace goltseditor
 
             if (CurrentInterfaceStage == 0)
             {
-                SelectedDrawingDepth.Update(0, 0,
-                    (int)((SelectedDrawingDepth.Contents.Length + 1) * SelectedDrawingDepth.CharDimensions.X),
-                    (int)SelectedDrawingDepth.CharDimensions.Y);
-
-                SelectedParalaxCoefficient.Update(0, (int)SelectedDrawingDepth.CharDimensions.Y+5,
-                    (int)((SelectedParalaxCoefficient.Contents.Length + 1) * SelectedParalaxCoefficient.CharDimensions.X), 
-                    (int)SelectedParalaxCoefficient.CharDimensions.Y);
-
                 if(CurrentlySelectedNumber<objects.objects.Count)
                 {
                     WorldObject wo = objects.objects[CurrentlySelectedNumber];
-                    float.TryParse(SelectedDrawingDepth.Contents, out wo.DrawingDepth);
-                    float.TryParse(SelectedParalaxCoefficient.Contents, out wo.ParalaxCoefficient);
+
+                    wo.Update(contentManager, this);
+                    wo.Parameters.Update(contentManager, 5, 5);
                 }
 
-                if (!SelectedDrawingDepth.Selected && !SelectedParalaxCoefficient.Selected &&
-                    ms.LeftButton == ButtonState.Released && PreviousMouseState.LeftButton == ButtonState.Pressed)
+                if (ms.X > MinimalXBorder && ms.X < AvObjectsXBound && AvaliableObjects.Count > SelectedAvaliableObject &&
+                   ms.LeftButton == ButtonState.Released && PreviousMouseState.LeftButton == ButtonState.Pressed)
                 {
-                    if (ms.X <= AvObjectsXBound && AvaliableObjects.Count > SelectedAvaliableObject)
-                    {
-                        WorldObject wo = AvaliableObjects[SelectedAvaliableObject];
+                    WorldObject wo = AvaliableObjects[SelectedAvaliableObject];
 
-                        WorldObject obj = Game1.Clone(AvaliableObjects[SelectedAvaliableObject]);
-                        obj.X = ms.X;
+                    WorldObject obj = Game1.Clone(AvaliableObjects[SelectedAvaliableObject]);
+                    obj.X = ms.X;
 
-                        obj.Y = ms.Y;
+                    obj.Y = ms.Y;
 
-                        objects.AddObject(obj);
-                    }
+                    objects.AddObject(obj);
                 }
 
                 if (ms.RightButton == ButtonState.Released && PreviousMouseState.RightButton == ButtonState.Pressed)
@@ -210,14 +188,7 @@ namespace goltseditor
                             SelectedAvaliableObject = (SelectedAvaliableObject + AvaliableObjects.Count) % AvaliableObjects.Count;
 
                         if (objects.objects.Count != 0)
-                        {
                             CurrentlySelectedNumber = (CurrentlySelectedNumber + objects.objects.Count) % objects.objects.Count;
-
-                            SelectedDrawingDepth = new Textbox(MainFont, true);
-                            SelectedParalaxCoefficient = new Textbox(MainFont, true);
-                            SelectedDrawingDepth.Contents = objects.objects[CurrentlySelectedNumber].DrawingDepth.ToString();
-                            SelectedParalaxCoefficient.Contents = objects.objects[CurrentlySelectedNumber].ParalaxCoefficient.ToString();
-                        }
                     }
                 }
 
@@ -241,16 +212,11 @@ namespace goltseditor
             else if(CurrentInterfaceStage==2)
             {
                 CurrentlyCreatedObject.Update(contentManager, this);
-
-                CreatedTextureName.Update(10, 10,
-                    (int)CreatedTextureName.CharDimensions.X * (CreatedTextureName.Contents.Length+1),
-                    (int)CreatedTextureName.CharDimensions.Y);
-
-                CurrentlyCreatedObject.ChangeBaseName(contentManager, CreatedTextureName.Contents);
+                CurrentlyCreatedObject.Parameters.Update(contentManager, 5, 5);
 
                 if (CurrentlyCreatedObject is PhysicalObject 
                     && ms.LeftButton==ButtonState.Released && PreviousMouseState.LeftButton==ButtonState.Pressed&&
-                    !CreatedTextureName.Selected)
+                    ms.X>MinimalXBorder)
                 {
                     ((PhysicalObject)CurrentlyCreatedObject).Hitbox.AddPoint(ms.X - 960, ms.Y - 540);
                 }
@@ -291,10 +257,6 @@ namespace goltseditor
                     }
                 }
 
-                SelectedDrawingDepth.Draw(spriteBatch, 0, 0, Color.White, Color.Black, 1.0f);
-                SelectedParalaxCoefficient.Draw(spriteBatch, 0, (int)SelectedDrawingDepth.CharDimensions.Y+5, 
-                    Color.White, Color.Black, 1.0f);
-
                 foreach (var currentObject in objects.objects)
                 {
                     currentObject.Draw((int)currentObject.X, (int)currentObject.Y, spriteBatch, 0.5f, Game1.StandardScale, Color.White, SpriteEffects.None);
@@ -309,6 +271,7 @@ namespace goltseditor
                     WorldObject wo = objects.objects[CurrentlySelectedNumber];
 
                     wo.Draw((int)wo.X, (int)wo.Y, spriteBatch, 0.6f, Game1.StandardScale, Color.Green, SpriteEffects.None);
+                    wo.Parameters.Draw(spriteBatch, 5, 5, Color.White, Color.Black, 1f);
                 }
 
                 var ms = PreviousMouseState;
@@ -329,9 +292,8 @@ namespace goltseditor
             }
             else if(CurrentInterfaceStage==2)
             {
-                CreatedTextureName.Draw(spriteBatch, 10, 10, Color.White, Color.Black, 1f);
-
                 CurrentlyCreatedObject.Draw(960, 540, spriteBatch, 0.9f, Game1.StandardScale, Color.White, SpriteEffects.None);
+                CurrentlyCreatedObject.Parameters.Draw(spriteBatch, 5, 5, Color.White, Color.Black, 1f);
 
                 if (CurrentlyCreatedObject is PhysicalObject)
                 {
@@ -361,7 +323,6 @@ namespace goltseditor
                         spriteBatch.Draw(Game1.OnePixel,
                             new Vector2(960 + (int)ps.Hitbox.HitboxPoints[ls].Item1, 540 + (int)ps.Hitbox.HitboxPoints[ls].Item2),
                             null, Color.Red, (float)rot, new Vector2(0, 0), new Vector2((float)scale, 2), SpriteEffects.None, 1f);
-
                     }
                 }
             }
