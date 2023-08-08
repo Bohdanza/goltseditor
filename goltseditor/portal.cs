@@ -35,6 +35,19 @@ namespace goltseditor
         {
             Texture.Update(contentManager);
         }
+
+        protected override void InitParams()
+        {
+            base.InitParams();
+
+            Parameters.AddTextbox(new Textbox(Game1.MonospaceFont, true, false),
+                new Ref(() => RoomIndex, x => { RoomIndex = (int)x; }),
+                x => { return int.Parse(x); }, x => { return x.ToString(); });
+
+            Parameters.AddTextbox(new Textbox(Game1.MonospaceFont, true, false),
+                new Ref(() => ExitPointIndex, x => { ExitPointIndex = (int)x; }),
+                x => { return int.Parse(x); }, x => { return x.ToString(); });
+        }
     }
 
     public class ExitPoint : WorldObject
