@@ -27,7 +27,10 @@ namespace goltseditor
         protected int previousDirection = -1;
 
         [JsonProperty]
-        protected string standTextureName { get; init; } 
+        protected string standTextureName { get; init; }
+
+        [JsonConstructor]
+        public Mob() { }
 
         public Mob(ContentManager contentManager, double x, double y, double movementX, double movementY, int weight,
             bool gravityAffected, string textureName, string hitboxPath, 

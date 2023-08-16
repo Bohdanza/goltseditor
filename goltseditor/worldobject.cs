@@ -17,9 +17,8 @@ namespace goltseditor
         [JsonIgnore]
         public TextboxList Parameters { get; protected set; }
 
-        [JsonIgnore]
-        protected double PrevFallingSpeed = 3;
-        public const double StandartFallingSpeed = 3;
+        [JsonProperty]
+        public double StandartFallingSpeed { get; protected set; } = 3;
 
         [JsonProperty]
         public bool GravityAffected { get; protected set; }
@@ -101,6 +100,10 @@ namespace goltseditor
                 new Ref(() => DrawingDepth, x => { DrawingDepth = (float)x; }),
                 x => { return float.Parse(x); },
                 x => { return ((float)x).ToString(); });
+
+            Parameters.AddTextbox(new Textbox(Game1.MonospaceFont, true),
+                new Ref(() => StandartFallingSpeed, x => { StandartFallingSpeed = (double)x; }),
+                x => { return double.Parse(x); }, x => { return ((double)x).ToString(); });
         }
 
         /// <summary>
