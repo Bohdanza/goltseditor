@@ -19,6 +19,8 @@ namespace goltseditor
 
         [JsonProperty]
         public double StandartFallingSpeed { get; protected set; } = 3;
+        [JsonProperty]
+        public double CurrentFallingSpeed { get; protected set; }
 
         [JsonProperty]
         public bool GravityAffected { get; protected set; }
@@ -59,6 +61,8 @@ namespace goltseditor
 
             Weight = weight;
             GravityAffected = gravityAffected;
+
+            CurrentFallingSpeed = StandartFallingSpeed;
 
             ParalaxCoefficient = paralaxCoefficient;
 
