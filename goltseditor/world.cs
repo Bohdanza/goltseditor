@@ -41,6 +41,7 @@ namespace goltseditor
         public int CurrentInterfaceStage { get; protected set; }
 
         private MouseState PreviousMouseState;
+        private Tuple<double, double> createdPoint=new Tuple<double, double>(0,0);
         
         public int AvaliableObjectsOffsetY = 0, AvObjectsXBound=1625, CurrentlySelectedNumber=0, LastObjectChange=0,
             MinimalXBorder=100;
@@ -214,11 +215,28 @@ namespace goltseditor
                 CurrentlyCreatedObject.Update(contentManager, this);
                 CurrentlyCreatedObject.Parameters.Update(contentManager, 5, 5);
 
+                var htb = ((PhysicalObject)CurrentlyCreatedObject).Hitbox;
+                double xq = ms.X - 960, yq = ms.Y - 540;
+
+                if (ks.IsKeyDown(Keys.LeftShift) || ks.IsKeyDown(Keys.RightShift)
+                    && htb.HitboxPoints.Count > 0)
+                {
+                    double xq1 = htb.HitboxPoints[htb.HitboxPoints.Count - 1].Item1;
+                    double yq1 = htb.HitboxPoints[htb.HitboxPoints.Count - 1].Item2;
+
+                    if (Math.Abs(yq1 - yq) < Math.Abs(xq1 - xq))
+                        yq = yq1;
+                    else
+                        xq = xq1;
+                }
+
+                createdPoint = new Tuple<double, double>(xq, yq);
+
                 if (CurrentlyCreatedObject is PhysicalObject 
                     && ms.LeftButton==ButtonState.Released && PreviousMouseState.LeftButton==ButtonState.Pressed&&
                     ms.X>MinimalXBorder)
                 {
-                    ((PhysicalObject)CurrentlyCreatedObject).Hitbox.AddPoint(ms.X - 960, ms.Y - 540);
+                    htb.AddPoint(createdPoint.Item1, createdPoint.Item2);
                 }
 
                 if(ks.IsKeyDown(Keys.Enter))
@@ -305,9 +323,11 @@ namespace goltseditor
                     {
                         int ls = ps.Hitbox.HitboxPoints.Count - 1;
                         Tuple<double, double> lq = new Tuple<double, double>(ps.Hitbox.HitboxPoints[ls].Item1 + 960, ps.Hitbox.HitboxPoints[ls].Item2 + 540);
-                        double rot = Game1.GetDirection(new Tuple<double, double>(PreviousMouseState.X, PreviousMouseState.Y),
-                            lq);
-                        double scale = Game1.GetDistance(lq, new Tuple<double, double>(PreviousMouseState.X, PreviousMouseState.Y));
+                        Tuple<double, double> createdPoint1 = new Tuple<double, double>(createdPoint.Item1 + 960,
+                            createdPoint.Item2 + 540);
+
+                        double rot = Game1.GetDirection(createdPoint1, lq);
+                        double scale = Game1.GetDistance(lq, createdPoint1);
                         
                         spriteBatch.Draw(Game1.OnePixel,
                             new Vector2(960 + (int)ps.Hitbox.HitboxPoints[ls].Item1, 540 + (int)ps.Hitbox.HitboxPoints[ls].Item2),
@@ -316,9 +336,8 @@ namespace goltseditor
                         ls = 0;
 
                         lq = new Tuple<double, double>(ps.Hitbox.HitboxPoints[ls].Item1 + 960, ps.Hitbox.HitboxPoints[ls].Item2 + 540);
-                        rot = Game1.GetDirection(new Tuple<double, double>(PreviousMouseState.X, PreviousMouseState.Y),
-                            lq);
-                        scale = Game1.GetDistance(lq, new Tuple<double, double>(PreviousMouseState.X, PreviousMouseState.Y));
+                        rot = Game1.GetDirection(createdPoint1, lq);
+                        scale = Game1.GetDistance(lq, createdPoint1);
 
                         spriteBatch.Draw(Game1.OnePixel,
                             new Vector2(960 + (int)ps.Hitbox.HitboxPoints[ls].Item1, 540 + (int)ps.Hitbox.HitboxPoints[ls].Item2),
