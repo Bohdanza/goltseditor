@@ -334,7 +334,7 @@ namespace goltseditor
                             null, Color.Red, (float)rot, new Vector2(0, 0), new Vector2((float)scale, 2), SpriteEffects.None, 1f);
 
                         ls = 0;
-
+                            
                         lq = new Tuple<double, double>(ps.Hitbox.HitboxPoints[ls].Item1 + 960, ps.Hitbox.HitboxPoints[ls].Item2 + 540);
                         rot = Game1.GetDirection(createdPoint1, lq);
                         scale = Game1.GetDistance(lq, createdPoint1);
@@ -356,6 +356,9 @@ namespace goltseditor
 
             ObjectButtons.Add(new Button(0, 170, 10, 160, 160,
                 contentManager.Load<Texture2D>("portalcreatereleased"), contentManager.Load<Texture2D>("portalcreatepressed")));
+
+            ObjectButtons.Add(new Button(0, 340, 10, 160, 160,
+                contentManager.Load<Texture2D>("blackcreatereleased"), contentManager.Load<Texture2D>("blackcreatepressed")));
         }   
 
         private void CreatedObjectInit(ContentManager contentManager, int index)
@@ -364,6 +367,9 @@ namespace goltseditor
                 CurrentlyCreatedObject = new Obstacle(contentManager, 0, 0, "", new List<Tuple<double, double>>());
             if (index == 1)
                 CurrentlyCreatedObject = new Portal(contentManager, 0, 0, 0, 0, 1, false, "", new List<Tuple<double, double>>(), 0, 0);
+            if (index == 2)
+                CurrentlyCreatedObject = new BlackenedObstacle(contentManager, 0, 0, 0, 0, 999999, false, "",
+                    new List<Tuple<double, double>>(), 10, 20);
         }
 
         public void Save()
